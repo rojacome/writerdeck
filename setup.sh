@@ -260,9 +260,39 @@ esac
 
 say "Updating package lists"
 sudo apt-get update -y
+# Ensure locales package is present before we configure locale
+PKGS+=(locales)
 say "Installing: ${PKGS[*]}"
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "${PKGS[@]}"
 ok "Packages installed"
+
+# --------------------------------------------------------------------------- #
+# Locale — without UTF-8 locale, accented characters (ç, ã, etc.) won't work
+# even with the correct keyboard layout.
+# --------------------------------------------------------------------------- #
+say "Configuring locale"
+# Pick a sensible locale based on keyboard layout choice.
+case "${XKB_LAYOUT}" in
+  br) SYSTEM_LOCALE="pt_BR.UTF-8" ;;
+  de) SYSTEM_LOCALE="de_DE.UTF-8" ;;
+  fr) SYSTEM_LOCALE="fr_FR.UTF-8" ;;
+  es) SYSTEM_LOCALE="es_ES.UTF-8" ;;
+  pt) SYSTEM_LOCALE="pt_PT.UTF-8" ;;
+  *)  SYSTEM_LOCALE="en_US.UTF-8" ;;
+esac
+# Generate the locale if it isn't already present.
+if ! locale -a 2>/dev/null | grep -qi "$(echo "$SYSTEM_LOCALE" | tr '[:upper:]' '[:lower:]' | tr -d '.')"; then
+  echo "${SYSTEM_LOCALE} UTF-8" | sudo tee -a /etc/locale.gen >/dev/null
+  sudo locale-gen
+fi
+sudo update-locale LANG="${SYSTEM_LOCALE}" LC_ALL="${SYSTEM_LOCALE}"
+ok "Locale set to ${SYSTEM_LOCALE}"
+
+# Also set LANG in the user's shell so it takes effect inside tmux/editor.
+if ! grep -q 'LANG=' "$TARGET_HOME/.bashrc" 2>/dev/null; then
+  printf '\nexport LANG="%s"\nexport LC_ALL="%s"\n' \
+    "$SYSTEM_LOCALE" "$SYSTEM_LOCALE" >> "$TARGET_HOME/.bashrc"
+fi
 
 # --------------------------------------------------------------------------- #
 # Helper: back up a file once before we overwrite it
