@@ -17,11 +17,15 @@ On a **freshly installed Debian** (console / "standard system utilities" only â€
 no desktop needed), logged in as a **normal user with sudo rights**, run:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/rojacome/writerdeck/main/setup.sh)
+bash <(curl -fsSL is.gd/writerdeck)
 ```
 
 That's it. The script will ask you a few questions and then set everything up.
 A reboot drops you straight into your writing environment.
+
+> `is.gd/writerdeck` is a short link that redirects to the script. The full,
+> canonical URL is:
+> `https://raw.githubusercontent.com/rojacome/writerdeck/main/setup.sh`
 
 > **Don't run it as root.** Run it as the user you want to auto-login. The script
 > calls `sudo` itself when it needs root.
@@ -101,7 +105,7 @@ Example:
 
 ```bash
 WD_EDITOR=1 WD_FONT=1 WD_FONTSIZE=18 WD_KEYMAP=3 \
-  bash <(curl -fsSL https://raw.githubusercontent.com/rojacome/writerdeck/main/setup.sh)
+  bash <(curl -fsSL is.gd/writerdeck)
 ```
 
 ---
