@@ -17,13 +17,13 @@ On a **freshly installed Debian** (console / "standard system utilities" only â€
 no desktop needed), logged in as a **normal user with sudo rights**, run:
 
 ```bash
-bash <(curl -fsSL is.gd/writerdeck)
+bash <(curl -fsSL j4c.me/wd)
 ```
 
 That's it. The script will ask you a few questions and then set everything up.
 A reboot drops you straight into your writing environment.
 
-> `is.gd/writerdeck` is a short link that redirects to the script. The full,
+> `j4c.me/wd` is a short link that redirects to the script. The full,
 > canonical URL is:
 > `https://raw.githubusercontent.com/rojacome/writerdeck/main/setup.sh`
 
@@ -105,7 +105,7 @@ Example:
 
 ```bash
 WD_EDITOR=1 WD_FONT=1 WD_FONTSIZE=18 WD_KEYMAP=3 \
-  bash <(curl -fsSL is.gd/writerdeck)
+  bash <(curl -fsSL j4c.me/wd)
 ```
 
 ---
