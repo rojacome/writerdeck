@@ -20,15 +20,23 @@ no desktop needed), logged in as a **normal user with sudo rights**, run:
 bash <(curl -fsSL j4c.me/wd)
 ```
 
+> **Minimal Debian installs don't include `curl`.** If you get
+> `curl: command not found`, use `wget` instead — it's always present:
+>
+> ```bash
+> bash <(wget -qO- j4c.me/wd)
+> ```
+>
+> Once inside, the script will install `curl` automatically before proceeding.
+
 That's it. The script will ask you a few questions and then set everything up.
 A reboot drops you straight into your writing environment.
 
-> `j4c.me/wd` is a short link that redirects to the script. The full,
-> canonical URL is:
-> `https://raw.githubusercontent.com/rojacome/writerdeck/main/setup.sh`
-
 > **Don't run it as root.** Run it as the user you want to auto-login. The script
 > calls `sudo` itself when it needs root.
+>
+> `j4c.me/wd` redirects to:
+> `https://raw.githubusercontent.com/rojacome/writerdeck/main/setup.sh`
 
 ---
 

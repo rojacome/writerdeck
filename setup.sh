@@ -42,6 +42,15 @@ die()  { printf '%s\n' "${RED}${BOLD}✗ $*${RESET}" >&2; exit 1; }
 command -v sudo >/dev/null 2>&1 || die "sudo is not installed. On Debian: install sudo and add your user to the sudo group, then re-run."
 command -v apt-get >/dev/null 2>&1 || die "This script targets Debian/apt-based systems."
 
+# curl may not be present on a minimal Debian install — install it early so the
+# rest of the script (and vimwiki git clone) can rely on network tools.
+if ! command -v curl >/dev/null 2>&1; then
+  say "curl not found — installing it now"
+  sudo apt-get update -y -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y curl
+  ok "curl installed"
+fi
+
 TARGET_USER="$(id -un)"
 TARGET_HOME="$HOME"
 
