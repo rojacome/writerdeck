@@ -90,14 +90,16 @@ fi
 FONT_CHOICE="${WD_FONT:-}"
 if [ -z "$FONT_CHOICE" ]; then
   FONT_CHOICE="$(ask_choice "Which monospace font should kmscon use?" 1 \
+    "Iosevka          (fonts-iosevka)" \
     "JetBrains Mono   (fonts-jetbrains-mono)" \
     "Fira Code        (fonts-firacode)" \
     "DejaVu Sans Mono (fonts-dejavu, usually preinstalled)")"
 fi
 case "$FONT_CHOICE" in
-  1) FONT_PKG="fonts-jetbrains-mono"; FONT_NAME="JetBrains Mono" ;;
-  2) FONT_PKG="fonts-firacode";       FONT_NAME="Fira Code" ;;
-  3) FONT_PKG="fonts-dejavu";         FONT_NAME="DejaVu Sans Mono" ;;
+  1) FONT_PKG="fonts-iosevka";        FONT_NAME="Iosevka" ;;
+  2) FONT_PKG="fonts-jetbrains-mono"; FONT_NAME="JetBrains Mono" ;;
+  3) FONT_PKG="fonts-firacode";       FONT_NAME="Fira Code" ;;
+  4) FONT_PKG="fonts-dejavu";         FONT_NAME="DejaVu Sans Mono" ;;
   *) die "Invalid font choice." ;;
 esac
 

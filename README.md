@@ -46,7 +46,8 @@ A reboot drops you straight into your writing environment.
 2. **Asks you three things** (interactive):
    - **Editor** — `neovim + vimwiki` (a personal wiki, like Veronica's build),
      `micro`, or `nano`.
-   - **Font** — JetBrains Mono, Fira Code, or DejaVu Sans Mono (plus a font size).
+   - **Font** — Iosevka, JetBrains Mono, Fira Code, or DejaVu Sans Mono (plus a
+     font size). See [Fonts](#fonts) below.
    - **Keyboard layout** — `us`, `us-intl`, `br-abnt2`, or a custom layout.
 
 3. **Configures passwordless autologin** on the main console (`tty1`) using a
@@ -97,7 +98,7 @@ You can skip the prompts by setting environment variables:
 | Variable | Values |
 | --- | --- |
 | `WD_EDITOR` | `1` = neovim+vimwiki, `2` = micro, `3` = nano |
-| `WD_FONT` | `1` = JetBrains Mono, `2` = Fira Code, `3` = DejaVu Sans Mono |
+| `WD_FONT` | `1` = Iosevka, `2` = JetBrains Mono, `3` = Fira Code, `4` = DejaVu Sans Mono |
 | `WD_FONTSIZE` | a number, e.g. `16` |
 | `WD_KEYMAP` | `1` = us, `2` = us-intl, `3` = br-abnt2 |
 
@@ -122,6 +123,22 @@ sudo rm -f /etc/systemd/system/kmsconvt@tty1.service.d/autologin.conf
 ```
 
 Backups of any replaced files are next to the originals as `*.writerdeck.bak`.
+
+---
+
+## Fonts
+
+The four monospace fonts offered by the script. All are free and open source.
+
+| # | Font | Preview / Homepage | Debian package |
+| --- | --- | --- | --- |
+| 1 | **Iosevka** | [typeof.net/Iosevka](https://typeof.net/Iosevka/) | `fonts-iosevka` |
+| 2 | **JetBrains Mono** | [jetbrains.com/lp/mono](https://www.jetbrains.com/lp/mono/) | `fonts-jetbrains-mono` |
+| 3 | **Fira Code** | [github.com/tonsky/FiraCode](https://github.com/tonsky/FiraCode) | `fonts-firacode` |
+| 4 | **DejaVu Sans Mono** | [dejavu-fonts.github.io](https://dejavu-fonts.github.io/) | `fonts-dejavu` |
+
+> **Tip:** [programmingfonts.org](https://www.programmingfonts.org/) lets you
+> preview and compare all of them side by side with your own text.
 
 ---
 
