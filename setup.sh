@@ -168,11 +168,15 @@ fi
 # Install packages
 # --------------------------------------------------------------------------- #
 
-# Force IPv4 for all apt operations — many minimal Debian installs have no
-# IPv6 connectivity, which causes apt to hang or fail when deb.debian.org
-# resolves to an IPv6 address first.
-sudo tee /etc/apt/apt.conf.d/99force-ipv4 >/dev/null <<'EOF'
+# Robustness settings for slow/unstable connections:
+# - Force IPv4 (many minimal installs lack IPv6 routing)
+# - Use HTTPS (port 80 is sometimes blocked by routers/ISPs)
+# - Increase connection and operation timeouts
+sudo tee /etc/apt/apt.conf.d/99writerdeck-network >/dev/null <<'EOF'
 Acquire::ForceIPv4 "true";
+Acquire::https::Timeout "120";
+Acquire::http::Timeout "120";
+Acquire::Retries "3";
 EOF
 
 # kmscon and fonts-iosevka are only in Debian trixie (testing) and later.
@@ -183,7 +187,7 @@ ensure_trixie_repo() {
   if apt-cache show "$pkg" >/dev/null 2>&1; then return; fi
   warn "'${pkg}' not found — adding Debian trixie as a low-priority source."
   sudo tee /etc/apt/sources.list.d/trixie.list >/dev/null <<'EOF'
-deb http://deb.debian.org/debian trixie main
+deb https://deb.debian.org/debian trixie main
 EOF
   sudo tee /etc/apt/preferences.d/trixie-pin >/dev/null <<'EOF'
 Package: *
@@ -206,7 +210,7 @@ ensure_iosevka() {
   if apt-cache show fonts-iosevka >/dev/null 2>&1; then return 0; fi
   warn "fonts-iosevka is only in Debian sid — adding sid with strict pinning."
   sudo tee /etc/apt/sources.list.d/sid.list >/dev/null <<'EOF'
-deb http://deb.debian.org/debian sid main
+deb https://deb.debian.org/debian sid main
 EOF
   sudo tee /etc/apt/preferences.d/sid-iosevka-only >/dev/null <<'EOF'
 # Allow nothing from sid by default
