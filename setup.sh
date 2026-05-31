@@ -167,6 +167,29 @@ fi
 # --------------------------------------------------------------------------- #
 # Install packages
 # --------------------------------------------------------------------------- #
+
+# kmscon and fonts-iosevka are only in Debian trixie (testing) and later.
+# If apt can't find them, add the trixie repo with lower priority (pinning)
+# so only the missing packages are pulled from it.
+ensure_trixie_repo() {
+  local pkg="$1"
+  if apt-cache show "$pkg" >/dev/null 2>&1; then return; fi
+  warn "'${pkg}' not found in current repos — adding Debian trixie as a"
+  warn "low-priority source (pin priority 100, below stable's 500)."
+  sudo tee /etc/apt/sources.list.d/trixie.list >/dev/null <<'EOF'
+deb http://deb.debian.org/debian trixie main
+EOF
+  sudo tee /etc/apt/preferences.d/trixie-pin >/dev/null <<'EOF'
+Package: *
+Pin: release n=trixie
+Pin-Priority: 100
+EOF
+  sudo apt-get update -y -qq
+}
+
+ensure_trixie_repo kmscon
+[ "$FONT_PKG" = "fonts-iosevka" ] && ensure_trixie_repo fonts-iosevka
+
 PKGS=(kmscon tmux network-manager "$FONT_PKG")
 case "$EDITOR_CHOICE" in
   1) PKGS+=(neovim git) ;;
