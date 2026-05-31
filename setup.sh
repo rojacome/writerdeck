@@ -200,10 +200,34 @@ EOF
 
 ensure_trixie_repo kmscon || die "kmscon is required but could not be found. Check your internet connection and try again."
 
-# fonts-iosevka fallback: if unavailable even from trixie, use JetBrains Mono
+# fonts-iosevka lives in Debian sid (unstable), not in trixie.
+# Add sid with a pin that targets ONLY fonts-iosevka so nothing else upgrades.
+ensure_iosevka() {
+  if apt-cache show fonts-iosevka >/dev/null 2>&1; then return 0; fi
+  warn "fonts-iosevka is only in Debian sid — adding sid with strict pinning."
+  sudo tee /etc/apt/sources.list.d/sid.list >/dev/null <<'EOF'
+deb http://deb.debian.org/debian sid main
+EOF
+  sudo tee /etc/apt/preferences.d/sid-iosevka-only >/dev/null <<'EOF'
+# Allow nothing from sid by default
+Package: *
+Pin: release n=sid
+Pin-Priority: -1
+
+# Except fonts-iosevka
+Package: fonts-iosevka
+Pin: release n=sid
+Pin-Priority: 100
+EOF
+  sudo apt-get update -y -qq
+  if ! apt-cache show fonts-iosevka >/dev/null 2>&1; then
+    warn "fonts-iosevka still not found — falling back to fonts-jetbrains-mono."
+    return 1
+  fi
+}
+
 if [ "$FONT_PKG" = "fonts-iosevka" ]; then
-  if ! ensure_trixie_repo fonts-iosevka; then
-    warn "fonts-iosevka not available — falling back to fonts-jetbrains-mono."
+  if ! ensure_iosevka; then
     FONT_PKG="fonts-jetbrains-mono"
     FONT_NAME="JetBrains Mono (fallback)"
     ensure_trixie_repo fonts-jetbrains-mono || true
