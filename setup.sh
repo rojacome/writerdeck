@@ -179,62 +179,75 @@ Acquire::http::Timeout "120";
 Acquire::Retries "3";
 EOF
 
-# kmscon and fonts-iosevka are only in Debian trixie (testing) and later.
-# If apt can't find them, add the trixie repo with lower priority (pinning)
-# so only the missing packages are pulled from it.
-ensure_trixie_repo() {
-  local pkg="$1"
-  if apt-cache show "$pkg" >/dev/null 2>&1; then return; fi
-  warn "'${pkg}' not found — adding Debian trixie as a low-priority source."
-  sudo tee /etc/apt/sources.list.d/trixie.list >/dev/null <<'EOF'
-deb https://deb.debian.org/debian trixie main
-EOF
-  sudo tee /etc/apt/preferences.d/trixie-pin >/dev/null <<'EOF'
+# Detect current Debian codename (e.g. bookworm, trixie).
+DEBIAN_CODENAME="$(. /etc/os-release 2>/dev/null && echo "${VERSION_CODENAME:-}" || true)"
+say "Detected Debian codename: ${DEBIAN_CODENAME:-unknown}"
+
+# ensure_pkg <package> <repo-entry> <pin-release-name> <pin-priority>
+# Adds a sources.list entry and re-runs apt-get update if the package is missing.
+ensure_pkg() {
+  local pkg="$1" repo_entry="$2" pin_name="$3" pin_priority="$4"
+  if apt-cache show "$pkg" >/dev/null 2>&1; then return 0; fi
+  warn "'${pkg}' not found — adding: ${repo_entry}"
+  local list_file="/etc/apt/sources.list.d/writerdeck-extra.list"
+  # Append only if not already present
+  grep -qF "$repo_entry" "$list_file" 2>/dev/null || echo "$repo_entry" | sudo tee -a "$list_file" >/dev/null
+  sudo tee /etc/apt/preferences.d/writerdeck-extra-pin >/dev/null <<EOF
 Package: *
-Pin: release n=trixie
-Pin-Priority: 100
+Pin: release n=${pin_name}
+Pin-Priority: ${pin_priority}
 EOF
-  sudo apt-get update -y -qq
-  # Re-check after update
+  sudo apt-get update -y
   if ! apt-cache show "$pkg" >/dev/null 2>&1; then
-    warn "Still can't find '${pkg}' after adding trixie."
+    warn "Still can't find '${pkg}' after adding repo."
     return 1
   fi
 }
 
-ensure_trixie_repo kmscon || die "kmscon is required but could not be found. Check your internet connection and try again."
+# kmscon: in bookworm main, in trixie-backports, in sid.
+if ! apt-cache show kmscon >/dev/null 2>&1; then
+  case "${DEBIAN_CODENAME:-}" in
+    trixie)
+      ensure_pkg kmscon \
+        "deb https://deb.debian.org/debian trixie-backports main" \
+        "trixie-backports" 100 \
+      || ensure_pkg kmscon \
+        "deb https://deb.debian.org/debian sid main" \
+        "sid" 100
+      ;;
+    bookworm|*)
+      ensure_pkg kmscon \
+        "deb https://deb.debian.org/debian trixie main" \
+        "trixie" 100
+      ;;
+  esac
+fi
+apt-cache show kmscon >/dev/null 2>&1 || die "kmscon is required but could not be found. Check your internet connection and try again."
 
-# fonts-iosevka lives in Debian sid (unstable), not in trixie.
-# Add sid with a pin that targets ONLY fonts-iosevka so nothing else upgrades.
+# fonts-iosevka: only in sid (unstable). Strict pin so nothing else comes from sid.
 ensure_iosevka() {
   if apt-cache show fonts-iosevka >/dev/null 2>&1; then return 0; fi
   warn "fonts-iosevka is only in Debian sid — adding sid with strict pinning."
-  sudo tee /etc/apt/sources.list.d/sid.list >/dev/null <<'EOF'
-deb https://deb.debian.org/debian sid main
-EOF
-  sudo tee /etc/apt/preferences.d/sid-iosevka-only >/dev/null <<'EOF'
-# Allow nothing from sid by default
+  local list_file="/etc/apt/sources.list.d/writerdeck-extra.list"
+  grep -qF "sid main" "$list_file" 2>/dev/null || \
+    echo "deb https://deb.debian.org/debian sid main" | sudo tee -a "$list_file" >/dev/null
+  sudo tee /etc/apt/preferences.d/writerdeck-extra-pin >/dev/null <<'EOF'
 Package: *
 Pin: release n=sid
 Pin-Priority: -1
 
-# Except fonts-iosevka
 Package: fonts-iosevka
 Pin: release n=sid
 Pin-Priority: 100
 EOF
-  sudo apt-get update -y -qq
-  if ! apt-cache show fonts-iosevka >/dev/null 2>&1; then
-    warn "fonts-iosevka still not found — falling back to fonts-jetbrains-mono."
-    return 1
-  fi
+  sudo apt-get update -y
+  apt-cache show fonts-iosevka >/dev/null 2>&1
 }
 
 if [ "$FONT_PKG" = "fonts-iosevka" ]; then
   if ! ensure_iosevka; then
     FONT_PKG="fonts-jetbrains-mono"
     FONT_NAME="JetBrains Mono (fallback)"
-    ensure_trixie_repo fonts-jetbrains-mono || true
   fi
 fi
 
