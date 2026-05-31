@@ -168,14 +168,20 @@ fi
 # Install packages
 # --------------------------------------------------------------------------- #
 
+# Force IPv4 for all apt operations — many minimal Debian installs have no
+# IPv6 connectivity, which causes apt to hang or fail when deb.debian.org
+# resolves to an IPv6 address first.
+sudo tee /etc/apt/apt.conf.d/99force-ipv4 >/dev/null <<'EOF'
+Acquire::ForceIPv4 "true";
+EOF
+
 # kmscon and fonts-iosevka are only in Debian trixie (testing) and later.
 # If apt can't find them, add the trixie repo with lower priority (pinning)
 # so only the missing packages are pulled from it.
 ensure_trixie_repo() {
   local pkg="$1"
   if apt-cache show "$pkg" >/dev/null 2>&1; then return; fi
-  warn "'${pkg}' not found in current repos — adding Debian trixie as a"
-  warn "low-priority source (pin priority 100, below stable's 500)."
+  warn "'${pkg}' not found — adding Debian trixie as a low-priority source."
   sudo tee /etc/apt/sources.list.d/trixie.list >/dev/null <<'EOF'
 deb http://deb.debian.org/debian trixie main
 EOF
@@ -185,10 +191,24 @@ Pin: release n=trixie
 Pin-Priority: 100
 EOF
   sudo apt-get update -y -qq
+  # Re-check after update
+  if ! apt-cache show "$pkg" >/dev/null 2>&1; then
+    warn "Still can't find '${pkg}' after adding trixie."
+    return 1
+  fi
 }
 
-ensure_trixie_repo kmscon
-[ "$FONT_PKG" = "fonts-iosevka" ] && ensure_trixie_repo fonts-iosevka
+ensure_trixie_repo kmscon || die "kmscon is required but could not be found. Check your internet connection and try again."
+
+# fonts-iosevka fallback: if unavailable even from trixie, use JetBrains Mono
+if [ "$FONT_PKG" = "fonts-iosevka" ]; then
+  if ! ensure_trixie_repo fonts-iosevka; then
+    warn "fonts-iosevka not available — falling back to fonts-jetbrains-mono."
+    FONT_PKG="fonts-jetbrains-mono"
+    FONT_NAME="JetBrains Mono (fallback)"
+    ensure_trixie_repo fonts-jetbrains-mono || true
+  fi
+fi
 
 PKGS=(kmscon tmux network-manager "$FONT_PKG")
 case "$EDITOR_CHOICE" in
